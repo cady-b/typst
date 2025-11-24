@@ -1,13 +1,15 @@
+use std::io::{stdin, Read};
+
 use comemo::Track;
 use ecow::eco_format;
-use typst::diag::{HintedStrResult, SourceResult, Warned};
+use typst::diag::{bail, HintedStrResult, SourceResult, Warned};
 use typst::foundations::{Context, Scope, StyleChain, Value};
 use typst::syntax::{Span, SyntaxMode};
-use typst::{World, engine::Sink, introspection::Introspector, layout::PagedDocument};
+use typst::{engine::Sink, introspection::Introspector, layout::PagedDocument, World};
 use typst_eval::eval_string;
 use typst_html::HtmlDocument;
 
-use crate::args::{EvalCommand, Target};
+use crate::args::{EvalCommand, Input, Target};
 use crate::compile::print_diagnostics;
 use crate::set_failed;
 use crate::world::SystemWorld;
@@ -29,16 +31,28 @@ pub fn eval(command: &'static EvalCommand) -> HintedStrResult<()> {
             .map(|output| output.map(|document| document.introspector)),
     };
 
+    // Fall back to `stdin` iff no expression was provided as an argument
+    // and `--in` doesn't already take `stdin`.
+    let expression = match (&command.expression, &command.r#in) {
+        (Some(v), _) => v.clone(),
+        (None, Some(Input::Stdin)) => bail!(
+            "no expression provided";
+            hint: "when `--in` reads from stdin, the expression cannot fall back and must be given as an argument";
+        ),
+        (None, _) => {
+            let mut input = String::new();
+            stdin().read_to_string(&mut input).map_err(|e| eco_format!("{e}"))?;
+
+            input
+        }
+    };
+
     match output {
         // Retrieve and print evaluation results.
         Ok(introspector) => {
             let mut sink = Sink::new();
-            let eval_result = evaluate_expression(
-                command.expression.clone(),
-                &mut sink,
-                &world,
-                &introspector,
-            );
+            let eval_result =
+                evaluate_expression(expression, &mut sink, &world, &introspector);
             let errors = match &eval_result {
                 Err(errors) => errors.as_slice(),
                 Ok(value) => {

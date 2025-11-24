@@ -185,8 +185,9 @@ pub struct QueryCommand {
 /// Evaluates a piece of Typst code, optionally in the context of a document.
 #[derive(Debug, Clone, Parser)]
 pub struct EvalCommand {
-    /// The piece of Typst code to evaluate.
-    pub expression: String,
+    /// The piece of Typst code to evaluate. Reads from stdin if none is
+    /// provided and `--in -` isn't given.
+    pub expression: Option<String>,
 
     /// A file in whose context to evaluate the code. Can be used to
     /// introspect the document. Use `-` to read input from stdin.
