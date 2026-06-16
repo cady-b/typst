@@ -27,8 +27,10 @@ use crate::visualize::{LineElem, Stroke};
 /// Second part
 /// ```
 ///
-/// You can also fully replace the divider with custom content like a floral or
-/// asterisks, but then you should wrap it in a block to preserve spacing:
+/// You can also fully replace the divider with custom content like a
+/// #link("https://en.wikipedia.org/wiki/Dinkus")[dinkus] or
+/// #link("https://en.wikipedia.org/wiki/Fleuron_(typography)")[fleuron],
+/// wrapped in a @block to preserve spacing:
 ///
 /// ```example
 /// #show divider: set align(center)
